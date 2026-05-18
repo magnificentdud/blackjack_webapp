@@ -136,6 +136,12 @@ class GameUI {
     }
 
     playerSplit() {
+        const hand = this.game.getCurrentHand();
+        if (!hand || !hand.canSplit()) {
+            alert('Cannot split this hand!');
+            return;
+        }
+
         const splitBet = this.game.bets[this.game.currentSeat] / 2;
         if (this.balance < splitBet) {
             alert('Insufficient balance to split!');
@@ -190,7 +196,6 @@ class GameUI {
         const playerValue = document.getElementById(`playerValue${seatIndex}`);
         const playerStatus = document.getElementById(`playerStatus${seatIndex}`);
         const chipStack = document.getElementById(`chipStack${seatIndex}`);
-        const hand = this.game.seats[seatIndex][this.game.currentHandIndex === seatIndex ? this.game.currentHandIndex : 0];
         const bet = this.game.getBet(seatIndex);
 
         // Clear seat classes
@@ -209,47 +214,80 @@ class GameUI {
         // Update chip stack
         chipStack.textContent = `$${bet}`;
 
-        // Update cards
+        // Update cards - display all hands for this seat
         playerCards.innerHTML = '';
-        this.game.seats[seatIndex].forEach(hand => {
+        let allBust = true;
+        let anyWin = false;
+        let allPush = true;
+        let anyBlackjack = false;
+
+        this.game.seats[seatIndex].forEach((hand, handIdx) => {
+            // Add separator between split hands
+            if (handIdx > 0) {
+                const separator = document.createElement('div');
+                separator.style.width = '100%';
+                separator.style.height = '2px';
+                separator.style.backgroundColor = 'rgba(212, 175, 55, 0.5)';
+                separator.style.margin = '5px 0';
+                playerCards.appendChild(separator);
+            }
+
             hand.getCards().forEach(card => {
                 const cardEl = this.createCardElement(card);
                 playerCards.appendChild(cardEl);
             });
+
+            // Track hand statuses
+            if (hand.status !== 'bust' && hand.status !== 'loss') {
+                allBust = false;
+            }
+            if (hand.status === 'win') {
+                anyWin = true;
+                allPush = false;
+            }
+            if (hand.status === 'blackjack') {
+                anyBlackjack = true;
+                allPush = false;
+            }
+            if (hand.status !== 'push') {
+                allPush = false;
+            }
         });
 
-        // Update value
-        const totalValue = this.game.seats[seatIndex].reduce((sum, hand) => sum + hand.getValue(), 0);
-        playerValue.textContent = totalValue;
+        // Update value - show individual hand values if split
+        if (this.game.seats[seatIndex].length > 1) {
+            const values = this.game.seats[seatIndex].map(h => h.getValue());
+            playerValue.textContent = values.join(' / ');
+        } else {
+            playerValue.textContent = this.game.seats[seatIndex][0].getValue();
+        }
 
         // Update status
         playerStatus.classList.remove('busted', 'won', 'lost', 'push', 'blackjack');
         playerStatus.textContent = '';
 
-        if (this.game.seats[seatIndex].length > 0) {
-            const status = this.game.seats[seatIndex][0].status;
-            if (status) {
-                if (status === 'blackjack') {
-                    playerStatus.textContent = '🎉 BLACKJACK!';
-                    playerStatus.classList.add('blackjack');
-                    seat.classList.add('won');
-                } else if (status === 'bust') {
-                    playerStatus.textContent = '💥 BUST';
-                    playerStatus.classList.add('busted');
-                    seat.classList.add('busted');
-                } else if (status === 'win') {
-                    playerStatus.textContent = '✓ WIN';
-                    playerStatus.classList.add('won');
-                    seat.classList.add('won');
-                } else if (status === 'loss') {
-                    playerStatus.textContent = '✗ LOSS';
-                    playerStatus.classList.add('lost');
-                    seat.classList.add('lost');
-                } else if (status === 'push') {
-                    playerStatus.textContent = '= PUSH';
-                    playerStatus.classList.add('push');
-                    seat.classList.add('push');
-                }
+        const firstHand = this.game.seats[seatIndex][0];
+        if (firstHand.status) {
+            if (anyBlackjack) {
+                playerStatus.textContent = '🎉 BLACKJACK!';
+                playerStatus.classList.add('blackjack');
+                seat.classList.add('won');
+            } else if (allBust) {
+                playerStatus.textContent = '💥 BUST';
+                playerStatus.classList.add('busted');
+                seat.classList.add('busted');
+            } else if (anyWin) {
+                playerStatus.textContent = '✓ WIN';
+                playerStatus.classList.add('won');
+                seat.classList.add('won');
+            } else if (allPush) {
+                playerStatus.textContent = '= PUSH';
+                playerStatus.classList.add('push');
+                seat.classList.add('push');
+            } else if (firstHand.status === 'loss') {
+                playerStatus.textContent = '✗ LOSS';
+                playerStatus.classList.add('lost');
+                seat.classList.add('lost');
             }
         }
     }
@@ -274,11 +312,24 @@ class GameUI {
         const hand = this.game.getCurrentHand();
         const state = this.game.gameState;
 
+        // Deal button enabled only during betting
         document.getElementById('dealBtn').disabled = state !== 'betting';
-        document.getElementById('hitBtn').disabled = !hand || !hand.canHit();
-        document.getElementById('standBtn').disabled = !hand || hand.status !== null;
-        document.getElementById('doubleBtn').disabled = !hand || !hand.canDouble();
-        document.getElementById('splitBtn').disabled = !hand || !hand.canSplit();
+
+        // Hit disabled if: no hand, hand is complete, or split Aces (can only get 1 card)
+        const canHit = hand && hand.canHit() && hand.status !== 'splitAce';
+        document.getElementById('hitBtn').disabled = !canHit;
+
+        // Stand disabled if: no hand or hand already resolved
+        const canStand = hand && (hand.status === null || hand.status === 'splitAce');
+        document.getElementById('standBtn').disabled = !canStand;
+
+        // Double down disabled if: no hand, not 2 cards, already split, or insufficient balance
+        const canDouble = hand && hand.canDouble();
+        document.getElementById('doubleBtn').disabled = !canDouble;
+
+        // Split disabled if: no hand, not a pair, or split Aces (can't resplit)
+        const canSplit = hand && hand.canSplit();
+        document.getElementById('splitBtn').disabled = !canSplit;
     }
 
     showResults() {

@@ -88,7 +88,10 @@ class GameUI {
         this.updateURL();
     }
 
-    deal() {
+    /**
+     * Deal with animated card dealing (one by one)
+     */
+    async deal() {
         // Check if at least one seat has a bet
         const hasAnyBet = this.game.bets.some(bet => bet > 0);
         if (!hasAnyBet) {
@@ -96,7 +99,16 @@ class GameUI {
             return;
         }
 
-        this.game.deal();
+        // Disable deal button while dealing
+        document.getElementById('dealBtn').disabled = true;
+
+        // Call animated deal
+        await this.game.dealAnimated();
+
+        // Re-enable deal button
+        document.getElementById('dealBtn').disabled = false;
+
+        // Update UI after cards are dealt
         this.updateUI();
         this.updateActionButtons();
     }
@@ -312,8 +324,8 @@ class GameUI {
         const hand = this.game.getCurrentHand();
         const state = this.game.gameState;
 
-        // Deal button enabled only during betting
-        document.getElementById('dealBtn').disabled = state !== 'betting';
+        // Deal button enabled only during betting and not dealing
+        document.getElementById('dealBtn').disabled = state !== 'betting' || this.game.dealingInProgress;
 
         // Hit disabled if: no hand, hand is complete, or split Aces (can only get 1 card)
         const canHit = hand && hand.canHit() && hand.status !== 'splitAce';

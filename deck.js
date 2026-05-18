@@ -54,7 +54,9 @@ class Hand {
     constructor() {
         this.cards = [];
         this.bet = 0;
-        this.status = null; // null, 'blackjack', 'bust', 'stand', 'win', 'loss', 'push'
+        this.status = null; // null, 'blackjack', 'bust', 'stand', 'splitAce', 'double', 'win', 'loss', 'push'
+        this.isSplitHand = false;
+        this.isAceSplit = false;
     }
 
     addCard(card) {
@@ -93,25 +95,62 @@ class Hand {
         return this.getValue() > 21;
     }
 
+    /**
+     * True blackjack: only 21 with exactly 2 cards, not from a split
+     */
     isBlackjack() {
-        return this.cards.length === 2 && this.getValue() === 21;
+        if (this.cards.length !== 2) return false;
+        if (this.getValue() !== 21) return false;
+        if (this.isSplitHand) return false; // No blackjack from splits
+        if (this.isAceSplit) return false;  // No blackjack from Ace splits
+        
+        // Must be Ace + 10-value card
+        const hasAce = this.cards.some(c => c.rank === 'A');
+        const hasTenValue = this.cards.some(c => ['10', 'J', 'Q', 'K'].includes(c.rank));
+        return hasAce && hasTenValue;
     }
 
+    /**
+     * Can split pairs, including 10-value cards (10, J, Q, K all same value)
+     */
     isPair() {
-        return this.cards.length === 2 && 
-               this.cards[0].rank === this.cards[1].rank;
+        if (this.cards.length !== 2) return false;
+
+        const rank1 = this.cards[0].rank;
+        const rank2 = this.cards[1].rank;
+
+        // Exact rank match
+        if (rank1 === rank2) return true;
+
+        // 10-value cards can split together
+        const tenValues = ['10', 'J', 'Q', 'K'];
+        if (tenValues.includes(rank1) && tenValues.includes(rank2)) return true;
+
+        return false;
     }
 
     canSplit() {
-        return this.cards.length === 2 && this.isPair() && this.status === null;
+        // Cannot split if: not 2 cards, not a pair, already resolved, or is split Ace
+        if (this.cards.length !== 2) return false;
+        if (!this.isPair()) return false;
+        if (this.status !== null) return false;
+        if (this.isAceSplit) return false; // Cannot re-split Aces
+        
+        return true;
     }
 
     canDouble() {
+        // Can only double on initial 2 cards
         return this.cards.length === 2 && this.status === null;
     }
 
     canHit() {
-        return this.getValue() < 21 && this.status === null;
+        // Can hit if: hand not busted and not standing
+        // Cannot hit split Aces (they get exactly 1 card)
+        if (this.isAceSplit) return false;
+        if (this.getValue() >= 21) return false;
+        if (this.status !== null && this.status !== 'double') return false;
+        return true;
     }
 
     stand() {
@@ -121,6 +160,8 @@ class Hand {
     clear() {
         this.cards = [];
         this.status = null;
+        this.isSplitHand = false;
+        this.isAceSplit = false;
     }
 }
 
@@ -131,11 +172,19 @@ class Game {
     constructor() {
         this.deck = new Deck();
         this.dealer = new Hand();
-        this.seats = Array(5).fill(null).map(() => [new Hand()]); // Each seat can have multiple hands (splits)
+        this.seats = Array(5).fill(null).map(() => [new Hand()]);
         this.currentSeat = null;
         this.currentHandIndex = null;
         this.gameState = 'betting'; // 'betting', 'playing', 'dealerTurn', 'results'
         this.bets = Array(5).fill(0);
+        
+        // Game rules - casino standard
+        this.rules = {
+            dealerHitsSoft17: true,    // H17 - dealer hits on soft 17
+            doubleAfterSplit: true,    // DAS - can double after split
+            resplitAces: false,         // Cannot re-split Aces
+            doubleOnAnySplit: true      // Can double on any split hand
+        };
     }
 
     placeBet(seatIndex, amount) {
@@ -163,12 +212,12 @@ class Game {
         this.dealer.clear();
         this.seats.forEach(hands => {
             hands.forEach(hand => hand.clear());
-            hands.length = 1; // Remove any split hands
+            hands.length = 1;
         });
 
         this.gameState = 'playing';
 
-        // Deal initial cards
+        // Deal initial cards - 2 to each active seat
         for (let seat = 0; seat < 5; seat++) {
             if (this.bets[seat] > 0) {
                 const hand = this.seats[seat][0];
@@ -182,8 +231,8 @@ class Game {
         }
 
         // Dealer gets one card face-up, one face-down
-        this.dealer.addCard(this.deck.draw()); // Face-up
-        this.dealer.addCard(this.deck.draw()); // Face-down
+        this.dealer.addCard(this.deck.draw()); // Face-up (visible)
+        this.dealer.addCard(this.deck.draw()); // Face-down (hole card)
 
         // Set current seat to first active seat
         this.nextActiveHand();
@@ -198,6 +247,7 @@ class Game {
 
             for (let handIdx = 0; handIdx < this.seats[seat].length; handIdx++) {
                 const hand = this.seats[seat][handIdx];
+                // Hand needs action if: status is null or 'double' (just doubled, needs to stand automatically)
                 if (hand.status === null || hand.status === 'double') {
                     this.currentSeat = seat;
                     this.currentHandIndex = handIdx;
@@ -243,13 +293,18 @@ class Game {
         const hand = this.getCurrentHand();
         if (!hand || !hand.canDouble()) return false;
 
+        // Check if double after split is allowed
+        if (this.seats[this.currentSeat].length > 1 && !this.rules.doubleAfterSplit) {
+            return false;
+        }
+
         this.bets[this.currentSeat] *= 2;
         hand.addCard(this.deck.draw());
 
         if (hand.isBusted()) {
             hand.status = 'bust';
         } else {
-            hand.status = 'double';
+            hand.status = 'double'; // Double status means automatic stand after this
         }
 
         this.nextActiveHand();
@@ -260,21 +315,41 @@ class Game {
         const hand = this.getCurrentHand();
         if (!hand || !hand.canSplit()) return false;
 
+        // Cannot split if Aces and already re-split (based on rules)
+        if (hand.cards[0].rank === 'A' && !this.rules.resplitAces) {
+            return false;
+        }
+
         // Create new hand with second card
         const newHand = new Hand();
         newHand.addCard(hand.cards.pop());
         newHand.bet = hand.bet;
+        newHand.isSplitHand = true;
 
-        // Add card to both hands
+        // Check if splitting Aces
+        if (hand.cards[0].rank === 'A') {
+            hand.isAceSplit = true;
+            newHand.isAceSplit = true;
+        }
+
+        // Add one card to each hand
         hand.addCard(this.deck.draw());
         newHand.addCard(this.deck.draw());
+
+        // If split Aces, mark them as needing automatic stand (they get exactly 1 card)
+        if (hand.isAceSplit) {
+            hand.status = 'splitAce';
+            newHand.status = 'splitAce';
+        }
 
         // Add new hand to seat
         this.seats[this.currentSeat].push(newHand);
 
-        // Double the bet for split
+        // Double the bet for split (add equal amount)
         this.bets[this.currentSeat] *= 2;
 
+        // Move to next hand
+        this.nextActiveHand();
         return true;
     }
 
@@ -283,9 +358,30 @@ class Game {
         this.currentSeat = null;
         this.currentHandIndex = null;
 
-        // Reveal hole card
-        while (this.dealer.getValue() < 17) {
-            this.dealer.addCard(this.deck.draw());
+        // Dealer plays according to rules
+        // Hit on 16 or less, stand on 17 or more
+        // Exception: Hit on soft 17 (A+6) if rule is enabled
+        while (true) {
+            const dealerValue = this.dealer.getValue();
+            
+            if (dealerValue > 21) {
+                break; // Bust
+            }
+            
+            if (dealerValue >= 17) {
+                // Check soft 17 rule (H17 = Dealer Hits Soft 17)
+                const hasSoftHand = this.dealer.cards.some(card => card.rank === 'A');
+                if (dealerValue === 17 && hasSoftHand && this.rules.dealerHitsSoft17) {
+                    // Soft 17 and H17 is enabled - dealer must hit
+                    this.dealer.addCard(this.deck.draw());
+                } else {
+                    // 17 or higher (or soft 17 with S17 rule) - stand
+                    break;
+                }
+            } else {
+                // 16 or less - must hit
+                this.dealer.addCard(this.deck.draw());
+            }
         }
 
         this.resolveHands();
@@ -302,8 +398,13 @@ class Game {
 
             for (let hand of this.seats[seat]) {
                 if (hand.status === 'blackjack') {
-                    // Already marked, will pay 3:2
+                    // Blackjack stays as is - will pay 3:2
                     continue;
+                }
+
+                // Skip if still in splitAce status (shouldn't happen but safety check)
+                if (hand.status === 'splitAce') {
+                    hand.status = 'stand';
                 }
 
                 if (hand.isBusted()) {
@@ -328,7 +429,7 @@ class Game {
 
         if (seatBet === 0) return 0;
 
-        // For blackjack, bet was placed once
+        // Natural blackjack pays 3:2
         if (hands.length === 1 && hands[0].status === 'blackjack') {
             winnings = seatBet * 1.5; // 3:2 payout
         } else {
@@ -336,9 +437,9 @@ class Game {
             const betPerHand = seatBet / hands.length;
             for (let hand of hands) {
                 if (hand.status === 'win') {
-                    winnings += betPerHand * 2;
+                    winnings += betPerHand * 2; // 1:1 payout (double original bet)
                 } else if (hand.status === 'push') {
-                    winnings += betPerHand;
+                    winnings += betPerHand; // Return original bet
                 }
                 // Loss adds nothing
             }

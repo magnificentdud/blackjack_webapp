@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 Blackjack Table</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎰 Blackjack Table</h1>
+            <div class="header-stats">
+                <div class="stat">
+                    <span class="stat-label">Balance</span>
+                    <span class="stat-value" id="balance">$1,000</span>
+                </div>
+                <button class="btn btn-refill" id="refillBtn">Refill Balance</button>
+            </div>
+        </header>
+
+        <!-- Main Table Area -->
+        <main class="table-wrapper">
+            <!-- Dealer Area -->
+            <div class="dealer-area">
+                <h3>Dealer</h3>
+                <div class="dealer-cards" id="dealerCards"></div>
+                <div class="hand-value" id="dealerValue"></div>
+            </div>
+
+            <!-- Player Seats -->
+            <div class="seats-grid">
+                <div class="seat" data-seat="0">
+                    <div class="seat-header">Seat 1</div>
+                    <div class="player-cards" id="playerCards0"></div>
+                    <div class="hand-info">
+                        <span class="hand-value" id="playerValue0">0</span>
+                        <span class="hand-status" id="playerStatus0"></span>
+                    </div>
+                    <div class="bet-area">
+                        <div class="chip-stack" id="chipStack0">$0</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-action btn-add-chip" data-seat="0">+ Chip</button>
+                        <button class="btn btn-action btn-clear-bet" data-seat="0">Clear</button>
+                    </div>
+                </div>
+
+                <div class="seat" data-seat="1">
+                    <div class="seat-header">Seat 2</div>
+                    <div class="player-cards" id="playerCards1"></div>
+                    <div class="hand-info">
+                        <span class="hand-value" id="playerValue1">0</span>
+                        <span class="hand-status" id="playerStatus1"></span>
+                    </div>
+                    <div class="bet-area">
+                        <div class="chip-stack" id="chipStack1">$0</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-action btn-add-chip" data-seat="1">+ Chip</button>
+                        <button class="btn btn-action btn-clear-bet" data-seat="1">Clear</button>
+                    </div>
+                </div>
+
+                <div class="seat" data-seat="2">
+                    <div class="seat-header">Seat 3</div>
+                    <div class="player-cards" id="playerCards2"></div>
+                    <div class="hand-info">
+                        <span class="hand-value" id="playerValue2">0</span>
+                        <span class="hand-status" id="playerStatus2"></span>
+                    </div>
+                    <div class="bet-area">
+                        <div class="chip-stack" id="chipStack2">$0</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-action btn-add-chip" data-seat="2">+ Chip</button>
+                        <button class="btn btn-action btn-clear-bet" data-seat="2">Clear</button>
+                    </div>
+                </div>
+
+                <div class="seat" data-seat="3">
+                    <div class="seat-header">Seat 4</div>
+                    <div class="player-cards" id="playerCards3"></div>
+                    <div class="hand-info">
+                        <span class="hand-value" id="playerValue3">0</span>
+                        <span class="hand-status" id="playerStatus3"></span>
+                    </div>
+                    <div class="bet-area">
+                        <div class="chip-stack" id="chipStack3">$0</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-action btn-add-chip" data-seat="3">+ Chip</button>
+                        <button class="btn btn-action btn-clear-bet" data-seat="3">Clear</button>
+                    </div>
+                </div>
+
+                <div class="seat" data-seat="4">
+                    <div class="seat-header">Seat 5</div>
+                    <div class="player-cards" id="playerCards4"></div>
+                    <div class="hand-info">
+                        <span class="hand-value" id="playerValue4">0</span>
+                        <span class="hand-status" id="playerStatus4"></span>
+                    </div>
+                    <div class="bet-area">
+                        <div class="chip-stack" id="chipStack4">$0</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-action btn-add-chip" data-seat="4">+ Chip</button>
+                        <button class="btn btn-action btn-clear-bet" data-seat="4">Clear</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Betting & Game Controls -->
+        <div class="controls-area">
+            <!-- Chip Tray -->
+            <div class="chip-tray">
+                <h3>Select Bet Amount</h3>
+                <div class="chips">
+                    <button class="chip-btn" data-value="5">$5</button>
+                    <button class="chip-btn" data-value="25">$25</button>
+                    <button class="chip-btn" data-value="50">$50</button>
+                    <button class="chip-btn" data-value="100">$100</button>
+                    <button class="chip-btn" data-value="500">$500</button>
+                </div>
+                <div class="selected-chip-display">
+                    Selected: <span id="selectedChip">$5</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="game-controls">
+                <button class="btn btn-primary btn-deal" id="dealBtn">Deal</button>
+                <button class="btn btn-secondary btn-action" id="hitBtn" disabled>Hit</button>
+                <button class="btn btn-secondary btn-action" id="standBtn" disabled>Stand</button>
+                <button class="btn btn-secondary btn-action" id="doubleBtn" disabled>Double Down</button>
+                <button class="btn btn-secondary btn-action" id="splitBtn" disabled>Split</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="deck.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,599 @@
+:root {
+    --table-green: #0d5c2f;
+    --table-bright: #1a8c42;
+    --felt-dark: #0a3f1f;
+    --gold: #d4af37;
+    --chip-red: #dc143c;
+    --chip-black: #1a1a1a;
+    --chip-blue: #0066cc;
+    --text-light: #f0f0f0;
+    --text-dark: #1a1a1a;
+    --border-light: #4a7c59;
+    --success: #4caf50;
+    --error: #ff6b6b;
+    --warning: #ffc107;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'Arial', 'Helvetica', sans-serif;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    animation: slideDown 0.6s ease-out;
+}
+
+.header h1 {
+    font-size: 3em;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    color: var(--gold);
+}
+
+.header-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(212, 175, 55, 0.1);
+    padding: 15px 25px;
+    border-radius: 10px;
+    border: 2px solid var(--gold);
+}
+
+.stat-label {
+    font-size: 0.9em;
+    color: var(--text-light);
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--gold);
+    margin-top: 5px;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+    flex: 1;
+    background: radial-gradient(ellipse at center, var(--table-green) 0%, var(--felt-dark) 100%);
+    border: 3px solid var(--gold);
+    border-radius: 20px;
+    padding: 40px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* Dealer Area */
+.dealer-area {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.dealer-area h3 {
+    color: var(--gold);
+    margin-bottom: 15px;
+    font-size: 1.3em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.dealer-cards {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    height: 120px;
+}
+
+.card {
+    width: 70px;
+    height: 100px;
+    background: white;
+    border: 2px solid var(--text-dark);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    animation: dealCard 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    overflow: hidden;
+}
+
+.card.back {
+    background: linear-gradient(135deg, var(--chip-blue) 0%, #0047a3 100%);
+    color: var(--gold);
+    font-size: 2em;
+}
+
+.card.heart, .card.diamond {
+    color: var(--chip-red);
+}
+
+.card.club, .card.spade {
+    color: var(--text-dark);
+}
+
+.card-rank {
+    font-weight: bold;
+}
+
+.card-suit {
+    margin-left: 5px;
+}
+
+.hand-value {
+    color: var(--gold);
+    font-size: 1.2em;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Seats Grid */
+.seats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    flex: 1;
+}
+
+.seat {
+    background: rgba(10, 63, 31, 0.6);
+    border: 2px solid var(--border-light);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.seat:hover {
+    background: rgba(10, 63, 31, 0.8);
+    border-color: var(--gold);
+    transform: translateY(-2px);
+}
+
+.seat.active {
+    background: rgba(26, 140, 66, 0.4);
+    border-color: var(--success);
+}
+
+.seat.busted {
+    background: rgba(255, 107, 107, 0.2);
+    border-color: var(--error);
+}
+
+.seat.won {
+    background: rgba(76, 175, 80, 0.2);
+    border-color: var(--success);
+}
+
+.seat.lost {
+    background: rgba(255, 107, 107, 0.2);
+    border-color: var(--error);
+}
+
+.seat.push {
+    background: rgba(255, 193, 7, 0.2);
+    border-color: var(--warning);
+}
+
+.seat-header {
+    font-weight: bold;
+    color: var(--gold);
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.player-cards {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    min-height: 100px;
+    flex-wrap: wrap;
+}
+
+.card {
+    width: 60px;
+    height: 85px;
+    background: white;
+    border: 2px solid var(--text-dark);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1em;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    animation: dealCard 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.hand-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.hand-info .hand-value {
+    font-size: 1.1em;
+}
+
+.hand-status {
+    font-size: 0.9em;
+    font-weight: bold;
+    min-height: 20px;
+}
+
+.hand-status.busted {
+    color: var(--error);
+}
+
+.hand-status.won {
+    color: var(--success);
+}
+
+.hand-status.lost {
+    color: var(--error);
+}
+
+.hand-status.push {
+    color: var(--warning);
+}
+
+.hand-status.blackjack {
+    color: var(--gold);
+    animation: pulse 0.6s;
+}
+
+.bet-area {
+    text-align: center;
+    padding: 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+}
+
+.chip-stack {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 1.1em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.actions {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-add-chip, .btn-clear-bet {
+    flex: 1;
+    font-size: 0.75em;
+}
+
+/* Controls Area */
+.controls-area {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 20px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+}
+
+/* Chip Tray */
+.chip-tray {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.chip-tray h3 {
+    color: var(--gold);
+    font-size: 1em;
+}
+
+.chips {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.chip-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid var(--border-light);
+    background: linear-gradient(135deg, var(--chip-red) 0%, #a00e2e 100%);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    position: relative;
+}
+
+.chip-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+}
+
+.chip-btn.selected {
+    background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+    color: var(--text-dark);
+    border-color: white;
+    transform: scale(1.15);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+}
+
+.selected-chip-display {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.selected-chip-display span {
+    color: white;
+    font-size: 1.2em;
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--success) 0%, #388e3c 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--chip-blue) 0%, #0047a3 100%);
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0080ff 0%, #0066cc 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+
+.btn-action {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    padding: 8px 12px;
+    font-size: 0.85em;
+}
+
+.btn-action:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7b8a99 0%, #5a6268 100%);
+    transform: translateY(-1px);
+}
+
+.btn-refill {
+    background: linear-gradient(135deg, var(--gold) 0%, #b8860b 100%);
+    color: var(--text-dark);
+    padding: 10px 20px;
+    font-size: 0.9em;
+}
+
+.btn-refill:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ffd700 0%, #daa520 100%);
+    transform: translateY(-2px);
+}
+
+.btn-clear-bet {
+    background: linear-gradient(135deg, var(--error) 0%, #c62828 100%);
+}
+
+.btn-clear-bet:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ff8a80 0%, #ff5252 100%);
+}
+
+.game-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dealCard {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) rotateZ(-10deg) scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) rotateZ(0deg) scale(1);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    50% {
+        text-shadow: 0 0 10px rgba(212, 175, 55, 1);
+    }
+}
+
+@keyframes chipBounce {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.chip-stack.adding {
+    animation: chipBounce 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .seats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    }
+    
+    .header h1 {
+        font-size: 2.2em;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 1.8em;
+    }
+    
+    .table-wrapper {
+        padding: 20px 10px;
+        gap: 20px;
+    }
+    
+    .seats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 10px;
+    }
+    
+    .seat {
+        padding: 10px;
+    }
+    
+    .card {
+        width: 50px;
+        height: 70px;
+        font-size: 0.85em;
+    }
+    
+    .dealer-cards .card {
+        width: 60px;
+        height: 90px;
+    }
+    
+    .controls-area {
+        flex-direction: column;
+    }
+    
+    .chip-tray {
+        width: 100%;
+    }
+    
+    .game-controls {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .btn {
+        padding: 10px 16px;
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.5em;
+    }
+    
+    .header-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .seats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+    
+    .chip-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 0.8em;
+    }
+    
+    .btn {
+        padding: 8px 12px;
+        font-size: 0.8em;
+    }
+}
